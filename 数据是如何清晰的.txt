@@ -1,0 +1,20 @@
+原始的英雄联盟职业赛数据从“选手级”清洗成“队伍级”的分析数据表，专门服务于我们“什么决定胜负”这个方向。
+具体步骤是：
+
+1. 在 Jupyter Notebook 用 pandas 读入原始 CSV（15 万多行、161 列），初步查看列名和数据结构。
+
+2. 从 161 列中只保留和我们分析有关的字段，比如 gameid, league, year, side, teamname, result, golddiffat10, dragons, barons, towers, visionscore, vspm, killsat10 等，做成一个精简版 df_small。
+
+3. 利用 datacompleteness 过滤掉不完整对局，同时删除没有 result 的行，只保留有完整结果的比赛记录。
+
+4. 把 result 转换成一个二值的 win 列（赢记为 1，输记为 0），方便后面按不同分组计算“胜率”（就是 win 的平均值）。
+
+5. 用 ["gameid", "side"] 分组，把原本“每行一个选手”的数据聚合为“每队每局一行”：
+对于已经是队伍层面的字段（比如 golddiffat10, dragons, barons, towers 等），使用 first() 取该队的值；对视野相关字段（visionscore, vspm），使用 sum() 汇总五个选手的总和，得到整队的视野强度。
+
+6. 基于聚合后的队伍级数据，额外构造了几个新特征，目的是方便做图：
+推塔差：tower_diff = towers - opp_towers.
+队伍视野强度：team_vspm（五人 vspm 之和）；
+前 10 分钟击杀差：kills_diff_10 = killsat10 - opp_killsat10。
+
+7.最后把处理好的数据保存为 lol_team_clean.csv，现在每一行代表“一支队伍在一局比赛中的整体表现”，可以直接用来画： 前 10 分钟经济差 vs 胜率，小龙数量 vs 胜率，男爵控制 vs 胜，推塔差 vs 胜率，视野强度 vs 胜率，前 10 分钟击杀差 vs 胜率。
